@@ -1,3 +1,6 @@
+# RESTAPI
+
+
 # [Django REST framework][docs]
 
 [![build-status-image]][build-status]
@@ -64,7 +67,7 @@ Startup up a new project like so...
     ./manage.py createsuperuser
 
 
-Now edit the `example/urls.py` module in your project:
+Now edit the `api/urls.py` module in your project:
 
 ```python
 from django.contrib.auth.models import User
@@ -73,16 +76,25 @@ from rest_framework import routers, serializers, viewsets
 
 
 # Serializers define the API representation.
-class UserSerializer(serializers.HyperlinkedModelSerializer):
+class TaskSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
-        fields = ["url", "username", "email", "is_staff"]
+        model = Task
+        fields = "__all__"
 
 
 # ViewSets define the view behavior.
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
+class TaskLiStCreate(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated]
+
+    queryset =Task.objects.all()
+    serializer_class = TaskSerializer
+
+
+class TaskDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Task.objects.all()
+    serializer_class = TaskSerializer
+
+    permission_classes = [IsAdminUser]
 
 
 # Routers provide a way of automatically determining the URL conf.
@@ -92,8 +104,11 @@ router.register(r"users", UserViewSet)
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.
 urlpatterns = [
-    path("", include(router.urls)),
-    path("api-auth/", include("rest_framework.urls", namespace="rest_framework")),
+    path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+    path('tasks/', TaskLiStCreate.as_view(), name="task-list"),
+    path('tasks/<int:pk>/', TaskDetail.as_view(),name="task-detail")
 ]
 ```
 
@@ -108,12 +123,11 @@ INSTALLED_APPS = [
 ]
 
 REST_FRAMEWORK = {
-    # Use Django's standard `django.contrib.auth` permissions,
-    # or allow read-only access for unauthenticated users.
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly",
-    ]
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
 }
+
 ```
 
 That's it, we're done!
@@ -139,8 +153,8 @@ Or to create a new user:
     $ curl -X POST -d username=new -d email=new@example.com -d is_staff=false -H 'Accept: application/json; indent=4' -u admin:password http://127.0.0.1:8000/users/
     {
         "url": "http://127.0.0.1:8000/users/2/",
-        "username": "new",
-        "email": "new@example.com",
+        "username": "admin",
+        "email": "",
         "is_staff": false,
     }
 
