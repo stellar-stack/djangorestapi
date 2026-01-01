@@ -146,11 +146,6 @@ Or to create a new user:
         "is_staff": false,
     }
 
-# Documentation & Support
-
-Full documentation for the project is available at [https://www.django-rest-framework.org/][docs].
-
-For questions and support, use the [REST framework discussion group][group], or `#restframework` on libera.chat IRC.
 
 # Security
 
